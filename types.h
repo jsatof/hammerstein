@@ -1,6 +1,7 @@
 #pragma once
 
 #include <complex.h>
+#include <stddef.h>
 
 ///
 /// MSVC has their own complex api and types
