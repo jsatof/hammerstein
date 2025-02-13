@@ -32,7 +32,7 @@ typedef struct {
 } buffer_t;
 
 typedef struct {
-    _Complex *(data);
+    complex_t *data;
     size_t size;
 } complex_buffer_t;
 

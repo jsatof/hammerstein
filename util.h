@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <types.h>
 
+inline double min(double a, double b);
+inline double max(double a, double b);
+
 ///
 /// Will pretty print the contents of a matrix or buffer.
 ///

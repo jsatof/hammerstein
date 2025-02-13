@@ -5,6 +5,14 @@
 
 #include <util.h>
 
+double min(double a, double b) {
+    return (a < b) ? a : b;
+}
+
+double max(double a, double b) {
+    return (a > b) ? a : b;
+}
+
 void print_matrix(matrix_t *matrix) {
     printf("[");
     for (size_t i = 0; i < matrix->rows; ++i) {
@@ -80,8 +88,9 @@ void plot_simple_curve(char *title, buffer_t *buffer) {
 
     for (size_t i = 0; i < buffer->size; ++i) {
         char line[128];
-        snprintf(line, sizeof(line), "%zu {%f,%f}\n", i, real(buffer->data[i]), imag(buffer->data[i]));
-        fwrite(line, sizeof(*line), sizeof(line), plot_file);
+        snprintf(line, sizeof(line), "%zu {%f, %f}\n\0", i, real(buffer->data[i]), imag(buffer->data[i]));
+        size_t chars_to_write = min(strlen(line), 128); // why is strnlen not found?
+        fwrite(line, sizeof(*line), chars_to_write, plot_file);
     }
 
     fclose(plot_file);

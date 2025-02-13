@@ -13,7 +13,7 @@
 static const double PI = acosf(-1.f);
 
 typedef enum {
-    GOOD,
+    GOOD = 0,
     BAD_ALLOC,
     BAD_FILE,
 } error_state_enum;
@@ -107,20 +107,22 @@ int main() {
         return 1;
     }
 
-    for (size_t i = 0; i < hammerstein_matrix.rows; ++i) {
-        size_t new_size = input_buffer.size + (buffer_length - 1);
-        buffer_t new_buffer = {
-            .data = calloc(new_size, sizeof(double)),
-            .size = new_size,
-        };
-        if (!new_buffer.data) {
-            error_state = BAD_ALLOC;
-            fprintf(stderr, "ERROR: Could not allocate new_buffer in filtering loop: %s\n", error_string(error_state));
-            break;
-        }
-        buffer_pow(&new_buffer, i + 1);
-        filter(hammerstein_matrix.data, (i * buffer_length), arma_filter_b[i], arma_filter_a[i], &new_buffer);
+    size_t new_size = input_buffer.size + (buffer_length - 1);
+    buffer_t scratch_buffer = {
+        .data = calloc(new_size, sizeof(double)),
+        .size = new_size,
+    };
+    if (!scratch_buffer.data) {
+        error_state = BAD_ALLOC;
+        fprintf(stderr, "ERROR: Could not allocate scratch_buffer for filtering: %s\n", error_string(error_state));
+        return 1;
     }
+    for (size_t i = 0; i < hammerstein_matrix.rows; ++i) {
+        memset(scratch_buffer.data, 0, scratch_buffer.size);
+        buffer_pow(&scratch_buffer, i + 1);
+        filter(hammerstein_matrix.data, (i * buffer_length), arma_filter_b[i], arma_filter_a[i], &scratch_buffer);
+    }
+    free(scratch_buffer.data);
 
     buffer_t hammerstein_buffer = {
         .data = calloc(hammerstein_matrix.rows * hammerstein_matrix.cols, sizeof(double)),
@@ -133,22 +135,22 @@ int main() {
     }
 
     complex_buffer_t fft_buffer = {
-        .data = calloc(hammerstein_matrix.rows * hammerstein_matrix.cols, sizeof(double complex)),
-        .size = hammerstein_matrix.rows * hammerstein_matrix.cols,
+        .data = calloc(hammerstein_buffer.size, sizeof(double complex)),
+        .size = hammerstein_buffer.size,
     };
     if (!fft_buffer.data) {
         error_state = BAD_ALLOC;
         fprintf(stderr, "ERROR: Could not allocate fft_buffer\n", error_string(error_state));
         return 1;
     }
-    memcpy(hammerstein_buffer.data, hammerstein_matrix.data, hammerstein_matrix.rows * hammerstein_matrix.cols);
+    memcpy(hammerstein_buffer.data, hammerstein_matrix.data, hammerstein_buffer.size);
     free(hammerstein_matrix.data);
 
     fft(&fft_buffer, &hammerstein_buffer);
     printf("FFT:\n");
-    //print_complex_buffer(&fft_buffer);
 
     plot_simple_curve("input_buffer.plot", &input_buffer);
+    plot_simple_curve("hammerstein_buffer.plot", &hammerstein_buffer);
 
     ///
     /// End of main, proceed with cleanup
@@ -157,21 +159,22 @@ int main() {
         fprintf(stderr, "Exiting with error state: %s", error_string(error_state));
     }
 
+    free(input_buffer.data);
+    free(hammerstein_buffer.data);
+    free(fft_buffer.data);
+
     ///
     /// wait for user input from console
     ///
     printf("Enter to continue:\n");
     getc(stdin);
-
-    /// TODO: free other memory
-    free(input_buffer.data);
 }
 
 void init_input_buffer(buffer_t *buffer, double start_freq, double L, double increment_step) {
     double value = 0;
     // prepopulate
     for (size_t i = 0; i < buffer->size; ++i) {
-        buffer->data[i] = sinf(2.f * PI * start_freq * L * (expf(value / L)));
+        buffer->data[i] = sin(2.0 * PI * start_freq * L * (exp(value / L)));
         value += increment_step;
     }
     printf("length: %lu\n", buffer->size);
@@ -221,14 +224,15 @@ char *error_string(int state) {
 ///
 void filter(double *output, size_t offset, double kernel_b[3], double kernel_a[3], buffer_t *input) {
     size_t kernel_size = 3;
-    for (size_t i = 0; i < input->size - kernel_size; ++i) {
+    size_t start_i = kernel_size - 1;
+    for (size_t i = start_i; i < input->size; ++i) {
         double b_acc = 0.0;
         double a_acc = 0.0;
         for (size_t m = 0; m < kernel_size; ++m) {
-            b_acc += input->data[i + m] * kernel_b[m];
-            a_acc += output[i + m] * kernel_a[m];
+            b_acc += input->data[i - 2 + m] * kernel_b[m];
+            a_acc += output[i - 2 + m] * kernel_a[m];
         }
-        output[i] = b_acc - a_acc;
+        output[i - start_i] = b_acc - a_acc;
     }
 }
 
