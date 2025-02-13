@@ -69,29 +69,6 @@ int main() {
         {0.1, -0.1836, 0.0846},
     };
 
-    /*
-    double complex *hammer_kernel = calloc(kernel_count * hammer_kernel_size, sizeof(*hammer_kernel));
-    if (!hammer_kernel) {
-        fprintf(stderr, "ERROR: Could not allocate hammer_kernel\n");
-        return 1;
-    }
-
-    double complex *freq_response_buffer = calloc(buffer_length, sizeof(double complex));
-    if (!freq_response_buffer) {
-        fprintf(stderr, "ERROR: Could not allocate freq_response_buffer\n");
-        return 1;
-    }
-
-    double acc = 0.0;
-    for (size_t i = 0; i < kernel_count; ++i) {
-        for (size_t j = 0; j < hammer_kernel_size; ++j) {
-            size_t offset = i * kernel_count;
-            /////////
-            freq_response(freq_response_buffer, hammer_kernel, offset, hammer_kernel_size, arma_filter_a, arma_filter_b, );
-        }
-    }
-    */
-
     ///
     /// hammerstein_data is storing a matrix where each row will have the output data from the nonlinear model
     /// for each iteration
