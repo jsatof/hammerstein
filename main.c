@@ -206,8 +206,8 @@ void filter(double *output, size_t offset, double kernel_b[3], double kernel_a[3
         double b_acc = 0.0;
         double a_acc = 0.0;
         for (size_t m = 0; m < kernel_size; ++m) {
-            b_acc += input->data[i - 2 + m] * kernel_b[m];
-            a_acc += output[i - 2 + m] * kernel_a[m];
+            b_acc += input->data[i - start_i + m] * kernel_b[m];
+            a_acc += output[i - start_i + m] * kernel_a[m];
         }
         output[i - start_i] = b_acc - a_acc;
     }
