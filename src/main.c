@@ -5,7 +5,7 @@
 
 #include <nonlinear.h>
 
-static const float PI = acosf(-1.f);
+static float PI;
 
 typedef struct {
     float *data;
@@ -15,6 +15,7 @@ typedef struct {
 inline void init_start_buffer(float_buffer_t *buffer, float start_freq, float L, float total_steps);
 
 int main() {
+    PI = acosf(-1.f);
     float sampling_freq = 192000;
     float start_freq = 1e3;
     float end_freq = 20e3;
